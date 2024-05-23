@@ -10,7 +10,7 @@ module.exports = {
     },
 
     output: {
-        filename: "mlplist.js",
+        filename: "list/mlplist.js",
         library: "MLPlist"
     },
 

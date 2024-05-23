@@ -466,15 +466,7 @@ export function createTable(search = (this.getURL.searchParams.has("search") ? d
 
             content.innerHTML = "";
 
-            let i = 0;
-
             for (let item in catData) {
-                i += 1;
-
-                if (i >= 25) {
-                    break;
-                }
-
                 if (search) {
                     let search_input = document.getElementById("header_search");
 
