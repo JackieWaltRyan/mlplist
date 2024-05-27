@@ -254,7 +254,7 @@ def pony(item, category):
         description="Костюмы")
 def ponyset(item, category):
     try:
-        res_image, res_name = "", ""
+        res_image, res_name, res_parts = "", "", []
 
         # gameobjectdata:
         try:
@@ -273,9 +273,37 @@ def ponyset(item, category):
         except Exception:
             pass
 
+        try:
+            parts_body = item.find_all(name="Parts",
+                                       limit=1)[0]["Body"]
+
+            if parts_body:
+                res_parts.append(parts_body)
+        except Exception:
+            pass
+
+        try:
+            parts_mane = item.find_all(name="Parts",
+                                       limit=1)[0]["Mane"]
+
+            if parts_mane:
+                res_parts.append(parts_mane)
+        except Exception:
+            pass
+
+        try:
+            parts_tail = item.find_all(name="Parts",
+                                       limit=1)[0]["Tail"]
+
+            if parts_tail:
+                res_parts.append(parts_tail)
+        except Exception:
+            pass
+
         if res_image and res_name:
             return {"Изображение": res_image,
-                    "Имя": res_name}
+                    "Имя": res_name,
+                    "Части": res_parts}
     except Exception:
         return None
 

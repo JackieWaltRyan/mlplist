@@ -8,6 +8,7 @@
         "webpack-obfuscator": "3.5.1"
     },
     "dependencies": {
-        "crypto-js": "4.2.0"
+        "crypto-js": "4.2.0",
+        "fast-xml-parser": "4.4.0"
     }
 }

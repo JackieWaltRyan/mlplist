@@ -1,4 +1,5 @@
 import sha256 from "crypto-js/sha256";
+import {XMLParser} from "fast-xml-parser";
 
 import {findOne, insertOne, updateOne, updateToken} from "./mongo";
 import {createElement, createMessage, titleCase, updateTitle, zoomIn, zoomOut} from "./utils";
@@ -6,6 +7,7 @@ import {createElement, createMessage, titleCase, updateTitle, zoomIn, zoomOut} f
 export function init() {
     this.getURL = new URL(location.href);
     this.title = new updateTitle();
+
     this.root = {
         filter: {
             available: null,
@@ -21,7 +23,7 @@ export function init() {
         }, 1000);
     }
 
-    createListsMenu.call(this);
+    createCategoriesMenu.call(this);
     createLanguagesMenu.call(this);
     createFilterMenu.call(this);
 
@@ -33,7 +35,7 @@ export function init() {
     createTable.call(this);
 }
 
-export function createListsMenu() {
+export function createCategoriesMenu() {
     let headerLists = document.getElementById("header_lists");
     let menuLists = document.getElementById("menu_lists");
 
@@ -57,13 +59,14 @@ export function createListsMenu() {
 
     xhr.addEventListener("load", () => {
         if (xhr.status === 200) {
-            let categories = JSON.parse(xhr.responseText);
+            this.root.categoriesData = JSON.parse(xhr.responseText);
+
             let itemList = [];
             let trigger = true;
 
-            for (let item in categories) {
+            for (let item in this.root.categoriesData) {
                 if (trigger && !this.getURL.searchParams.get("page")) {
-                    this.getURL.searchParams.set("page", encodeURIComponent(categories[item]["page"]));
+                    this.getURL.searchParams.set("page", encodeURIComponent(this.root.categoriesData[item]["page"]));
 
                     history.pushState(null, null, this.getURL.href);
 
@@ -77,7 +80,7 @@ export function createListsMenu() {
 
                     itemList.push(el);
 
-                    if (categories[item]["page"] === decodeURIComponent(this.getURL.searchParams.get("page"))) {
+                    if (this.root.categoriesData[item]["page"] === decodeURIComponent(this.getURL.searchParams.get("page"))) {
                         el.classList.add("menu_block_content_item_active");
 
                         headerLists.value = ("Список: " + item);
@@ -96,8 +99,8 @@ export function createListsMenu() {
                     }
 
                     el.addEventListener("click", () => {
-                        if (decodeURIComponent(this.getURL.searchParams.get("page")) !== categories[item]["page"]) {
-                            this.getURL.searchParams.set("page", encodeURIComponent(categories[item]["page"]));
+                        if (decodeURIComponent(this.getURL.searchParams.get("page")) !== this.root.categoriesData[item]["page"]) {
+                            this.getURL.searchParams.set("page", encodeURIComponent(this.root.categoriesData[item]["page"]));
 
                             history.pushState(null, null, this.getURL.href);
 
@@ -122,14 +125,14 @@ export function createListsMenu() {
             }
         } else {
             setTimeout(() => {
-                createListsMenu.call(this);
+                createCategoriesMenu.call(this);
             }, 1000);
         }
     });
 
     xhr.addEventListener("error", () => {
         setTimeout(() => {
-            createListsMenu.call(this);
+            createCategoriesMenu.call(this);
         }, 1000);
     });
 
@@ -164,10 +167,11 @@ export function createLanguagesMenu() {
 
     xhr.addEventListener("load", () => {
         if (xhr.status === 200) {
-            let languages = JSON.parse(xhr.responseText);
+            this.root.languagesData = JSON.parse(xhr.responseText);
+
             let itemList = [];
 
-            for (let item in languages) {
+            for (let item in this.root.languagesData) {
                 document.getElementById("menu_languages_content").appendChild(createElement("div", {
                     class: "menu_block_content_item"
                 }, (el) => {
@@ -175,7 +179,7 @@ export function createLanguagesMenu() {
 
                     itemList.push(el);
 
-                    if (languages[item] === localStorage.getItem("mlplist_language")) {
+                    if (this.root.languagesData[item] === localStorage.getItem("mlplist_language")) {
                         el.classList.add("menu_block_content_item_active");
 
                         headerLanguages.value = ("Язык: " + item);
@@ -192,8 +196,8 @@ export function createLanguagesMenu() {
                     }
 
                     el.addEventListener("click", () => {
-                        if (languages[item] !== localStorage.getItem("mlplist_language")) {
-                            localStorage.setItem("mlplist_language", languages[item]);
+                        if (this.root.languagesData[item] !== localStorage.getItem("mlplist_language")) {
+                            localStorage.setItem("mlplist_language", this.root.languagesData[item]);
 
                             for (let i in itemList) {
                                 if (itemList[i] === el) {
@@ -384,39 +388,6 @@ export function loadUserData() {
             this.title.update({
                 user: this.root.userData["_id"]
             });
-
-            if (localStorage.getItem("mlplist_user") && localStorage.getItem("mlplist_password")) {
-                let headerLogin = document.getElementById("header_login").cloneNode(true);
-
-                document.getElementById("header_login").parentNode.replaceChild(headerLogin, document.getElementById("header_login"));
-
-                if ((this.root.userData["_id"] === localStorage.getItem("mlplist_user")) && (this.root.userData["password"] === localStorage.getItem("mlplist_password"))) {
-                    headerLogin.value = "Выйти из аккаунта";
-
-                    headerLogin.addEventListener("click", () => {
-                        localStorage.removeItem("mlplist_user");
-                        localStorage.removeItem("mlplist_password");
-
-                        createMessage.call(this, "info", "Вы вышли из аккаунта");
-
-                        createLoginMenu.call(this);
-                        createTable.call(this);
-                    });
-                } else {
-                    headerLogin.value = "Открыть мой список";
-
-                    headerLogin.addEventListener("click", () => {
-                        this.getURL.searchParams.delete("user");
-
-                        history.pushState(null, null, this.getURL.href);
-
-                        loadUserData.call(this);
-                        createTable.call(this);
-                    });
-                }
-            } else {
-                createLoginMenu.call(this);
-            }
         } else {
             if (this.getURL.searchParams.has("user")) {
                 this.getURL.searchParams.delete("user");
@@ -430,6 +401,8 @@ export function loadUserData() {
                 loadUserData.call(this);
             }
         }
+
+        createUserMenu.call(this);
     } else {
         this.title.update({
             user: null
@@ -499,12 +472,12 @@ export function createTable(search = (this.getURL.searchParams.has("search") ? d
 
                 let page = decodeURIComponent(this.getURL.searchParams.get("page"));
 
-                if ((this.root.filter.available !== null) && this.root.userData) {
-                    if (this.root.filter.available && !(page in this.root.userData)) {
+                if ((this.root.filter.available !== null) && this.root.userData && (page in this.root.userData)) {
+                    if (this.root.filter.available !== this.root.userData[page].includes(catData[item]["id"])) {
                         continue;
                     }
-
-                    if (this.root.filter.available !== this.root.userData[page].includes(catData[item]["id"])) {
+                } else {
+                    if (this.root.filter.available && !(page in this.root.userData)) {
                         continue;
                     }
                 }
@@ -589,7 +562,8 @@ export function createTable(search = (this.getURL.searchParams.has("search") ? d
 
                                     if ((page in this.root.userData) && this.root.userData[page].includes(catData[item]["id"])) {
                                         if (updateOne.call(this, {
-                                            "_id": this.root.userData["_id"]
+                                            "_id": this.root.userData["_id"],
+                                            "password": localStorage.getItem("mlplist_password")
                                         }, {
                                             "$pull": data
                                         })) {
@@ -606,7 +580,8 @@ export function createTable(search = (this.getURL.searchParams.has("search") ? d
                                         }
                                     } else {
                                         if (updateOne.call(this, {
-                                            "_id": this.root.userData["_id"]
+                                            "_id": this.root.userData["_id"],
+                                            "password": localStorage.getItem("mlplist_password")
                                         }, {
                                             "$push": data
                                         })) {
@@ -653,6 +628,519 @@ export function createTable(search = (this.getURL.searchParams.has("search") ? d
     });
 
     xhr.send();
+}
+
+export function createUserMenu() {
+    if (localStorage.getItem("mlplist_user") && localStorage.getItem("mlplist_password")) {
+        let headerLogin = document.getElementById("header_login").cloneNode(true);
+        let menuUser = document.getElementById("menu_user");
+
+        document.getElementById("header_login").parentNode.replaceChild(headerLogin, document.getElementById("header_login"));
+
+        headerLogin.value = localStorage.getItem("mlplist_user");
+        document.getElementById("menu_user_name").innerText = localStorage.getItem("mlplist_user");
+
+        headerLogin.addEventListener("click", () => {
+            menuUser.style.display = "flex";
+        });
+
+        if (!this.createUserMenu) {
+            menuUser.addEventListener("click", (event) => {
+                if (event.target === menuUser) {
+                    menuUser.style.display = "none";
+                }
+            });
+
+            document.getElementById("menu_user_close").addEventListener("click", () => {
+                menuUser.style.display = "none";
+            });
+
+            document.getElementById("menu_user_list").addEventListener("click", () => {
+                this.getURL.searchParams.delete("user");
+
+                history.pushState(null, null, this.getURL.href);
+
+                menuUser.style.display = "none";
+
+                loadUserData.call(this);
+                createTable.call(this);
+            });
+
+            document.getElementById("menu_user_logout").addEventListener("click", () => {
+                localStorage.removeItem("mlplist_user");
+                localStorage.removeItem("mlplist_password");
+
+                menuUser.style.display = "none";
+
+                createMessage.call(this, "info", "Вы вышли из аккаунта");
+
+                createLoginMenu.call(this);
+                createTable.call(this);
+            });
+
+            document.getElementById("menu_user_password_change").addEventListener("submit", () => {
+                let password_old = sha256(document.getElementById("menu_user_password_old").value).toString();
+                let password_new = sha256(document.getElementById("menu_user_password_new").value).toString();
+                let password_new_2 = sha256(document.getElementById("menu_user_password_new_2").value).toString();
+
+                if (password_new !== password_new_2) {
+                    createMessage.call(this, "alert", "Новые пароли не совпадают!");
+
+                    return null;
+                }
+
+                let user = findOne.call(this, {
+                    "_id": localStorage.getItem("mlplist_user"),
+                    "password": localStorage.getItem("mlplist_password")
+                });
+
+                if (user === "Ошибка загрузки") {
+                    createMessage.call(this, "error", "Ошибка соединения! Попробуйте еще раз...");
+
+                    return null;
+                }
+
+                if (password_old !== user["password"]) {
+                    createMessage.call(this, "alert", "Старый пароль неверный!");
+
+                    return null;
+                }
+
+                if (updateOne.call(this, {
+                    "_id": localStorage.getItem("mlplist_user"),
+                    "password": localStorage.getItem("mlplist_password")
+                }, {
+                    "$set": {
+                        "password": password_new
+                    }
+                })) {
+                    document.getElementById("menu_user_password_old").value = "";
+                    document.getElementById("menu_user_password_new").value = "";
+                    document.getElementById("menu_user_password_new_2").value = "";
+
+                    createMessage.call(this, "info", "Пароль успешно изменен! Требуется повторный вход!");
+
+                    document.getElementById("menu_user_logout").click();
+                } else {
+                    createMessage.call(this, "error", "Ошибка соединения! Попробуйте еще раз...");
+                }
+            });
+
+            let savefile = document.getElementById("menu_user_savefile");
+            let importData = document.getElementById("menu_user_import_data");
+
+            savefile.addEventListener("input", () => {
+                if (savefile.files.length !== 0) {
+                    try {
+                        importData.innerText = "Чтение...";
+
+                        let reader = new FileReader();
+
+                        reader.addEventListener("load", () => {
+                            try {
+                                importData.innerText = "Обработка...";
+
+                                let parser = new XMLParser({
+                                    ignoreAttributes: false,
+                                    allowBooleanAttributes: true,
+
+                                    transformTagName: (tagName) => {
+                                        return tagName.toLowerCase();
+                                    },
+                                    transformAttributeName: (attributeName) => {
+                                        return attributeName.toLowerCase();
+                                    },
+
+                                    isArray: (name) => {
+                                        return [
+                                            "profileavataritemidowned",
+                                            "profileavatarframeitemidowned",
+                                            "playercardbackgrounditemidowned",
+                                            "playercardbackgroundframeitemidowned",
+                                            "playercardcutiemarkitemidowned",
+                                            "ownedtheme",
+                                            "ownedrbp",
+                                            "storeditem",
+                                            "mapzone",
+                                            "object",
+                                            "altpony",
+                                            "ownpet",
+                                            "item"
+                                        ].includes(name);
+                                    }
+                                });
+
+                                let saveData = parser.parse(reader.result.toString());
+
+                                let parseData = {};
+
+                                for (let item in this.root.categoriesData) {
+                                    let page = this.root.categoriesData[item]["page"];
+
+                                    if (page === "profileavatar") {
+                                        try {
+                                            saveData["mlp_save"]["playerdata"]["profileavatarselection"]["profileavataritemidowned"].forEach((element) => {
+                                                if (!(page in parseData)) {
+                                                    parseData[page] = [];
+                                                }
+
+                                                if (!parseData[page].includes(element["@_id"])) {
+                                                    parseData[page].push(element["@_id"]);
+                                                }
+                                            });
+                                        } catch {
+                                        }
+                                    }
+
+                                    if (page === "profileavatarframe") {
+                                        try {
+                                            saveData["mlp_save"]["playerdata"]["profileavatarselection"]["profileavatarframeitemidowned"].forEach((element) => {
+                                                if (!(page in parseData)) {
+                                                    parseData[page] = [];
+                                                }
+
+                                                if (!parseData[page].includes(element["@_id"])) {
+                                                    parseData[page].push(element["@_id"]);
+                                                }
+                                            });
+                                        } catch {
+                                        }
+                                    }
+
+                                    if (page === "playercardbackground") {
+                                        try {
+                                            saveData["mlp_save"]["playerdata"]["playercard"]["playercardbackgrounditemidowned"].forEach((element) => {
+                                                if (!(page in parseData)) {
+                                                    parseData[page] = [];
+                                                }
+
+                                                if (!parseData[page].includes(element["@_id"])) {
+                                                    parseData[page].push(element["@_id"]);
+                                                }
+                                            });
+                                        } catch {
+                                        }
+                                    }
+
+                                    if (page === "playercardbackgroundframe") {
+                                        try {
+                                            saveData["mlp_save"]["playerdata"]["playercard"]["playercardbackgroundframeitemidowned"].forEach((element) => {
+                                                if (!(page in parseData)) {
+                                                    parseData[page] = [];
+                                                }
+
+                                                if (!parseData[page].includes(element["@_id"])) {
+                                                    parseData[page].push(element["@_id"]);
+                                                }
+                                            });
+                                        } catch {
+                                        }
+                                    }
+
+                                    if (page === "playercardcutiemark") {
+                                        try {
+                                            saveData["mlp_save"]["playerdata"]["playercard"]["playercardcutiemarkitemidowned"].forEach((element) => {
+                                                if (!(page in parseData)) {
+                                                    parseData[page] = [];
+                                                }
+
+                                                if (!parseData[page].includes(element["@_id"])) {
+                                                    parseData[page].push(element["@_id"]);
+                                                }
+                                            });
+                                        } catch {
+                                        }
+                                    }
+
+                                    if (page === "theme") {
+                                        try {
+                                            saveData["mlp_save"]["playerdata"]["themes"]["ownedtheme"].forEach((element) => {
+                                                if (!(page in parseData)) {
+                                                    parseData[page] = [];
+                                                }
+
+                                                if (!parseData[page].includes(element["@_id"])) {
+                                                    parseData[page].push(element["@_id"]);
+                                                }
+                                            });
+                                        } catch {
+                                        }
+                                    }
+
+                                    if (page === "path") {
+                                        try {
+                                            saveData["mlp_save"]["playerdata"]["roadbuildingpermit"]["ownedrbp"].forEach((element) => {
+                                                if (!(page in parseData)) {
+                                                    parseData[page] = [];
+                                                }
+
+                                                if (!parseData[page].includes(element["@_id"])) {
+                                                    parseData[page].push(element["@_id"]);
+                                                }
+                                            });
+                                        } catch {
+                                        }
+                                    }
+
+                                    if (page === "pony") {
+                                        try {
+                                            saveData["mlp_save"]["playerdata"]["storage"]["storeditem"].forEach((element) => {
+                                                if (element["@_id"].startsWith("Pony_")) {
+                                                    if (!(page in parseData)) {
+                                                        parseData[page] = [];
+                                                    }
+
+                                                    if (!parseData[page].includes(element["@_id"])) {
+                                                        parseData[page].push(element["@_id"]);
+                                                    }
+                                                }
+                                            });
+                                        } catch {
+                                        }
+
+                                        try {
+                                            saveData["mlp_save"]["mapzone"].forEach((zone) => {
+                                                zone["gameobjects"]["pony_objects"]["object"].forEach((element) => {
+                                                    if (!(page in parseData)) {
+                                                        parseData[page] = [];
+                                                    }
+
+                                                    if (!parseData[page].includes(element["@_id"])) {
+                                                        parseData[page].push(element["@_id"]);
+                                                    }
+                                                });
+                                            });
+                                        } catch {
+                                        }
+
+                                        try {
+                                            saveData["mlp_save"]["playerdata"]["ownedalterformofpony"]["altpony"].forEach((element) => {
+                                                if (!(page in parseData)) {
+                                                    parseData[page] = [];
+                                                }
+
+                                                if (!parseData[page].includes(element["@_id"])) {
+                                                    parseData[page].push(element["@_id"]);
+                                                }
+                                            });
+                                        } catch {
+                                        }
+                                    }
+
+                                    if (page === "pony_house") {
+                                        try {
+                                            saveData["mlp_save"]["playerdata"]["storage"]["storeditem"].forEach((element) => {
+                                                if (element["@_id"].startsWith("House_")) {
+                                                    if (!(page in parseData)) {
+                                                        parseData[page] = [];
+                                                    }
+
+                                                    if (!parseData[page].includes(element["@_id"])) {
+                                                        parseData[page].push(element["@_id"]);
+                                                    }
+                                                }
+                                            });
+                                        } catch {
+                                        }
+
+                                        try {
+                                            saveData["mlp_save"]["mapzone"].forEach((zone) => {
+                                                zone["gameobjects"]["pony_house_objects"]["object"].forEach((element) => {
+                                                    if (!(page in parseData)) {
+                                                        parseData[page] = [];
+                                                    }
+
+                                                    if (!parseData[page].includes(element["@_id"])) {
+                                                        parseData[page].push(element["@_id"]);
+                                                    }
+                                                });
+                                            });
+                                        } catch {
+                                        }
+                                    }
+
+                                    if (page === "ponypet") {
+                                        try {
+                                            saveData["mlp_save"]["playerdata"]["storage"]["storeditem"].forEach((element) => {
+                                                if (element["@_id"].startsWith("Pet_")) {
+                                                    if (!(page in parseData)) {
+                                                        parseData[page] = [];
+                                                    }
+
+                                                    if (!parseData[page].includes(element["@_id"])) {
+                                                        parseData[page].push(element["@_id"]);
+                                                    }
+                                                }
+                                            });
+                                        } catch {
+                                        }
+
+                                        try {
+                                            saveData["mlp_save"]["mapzone"].forEach((zone) => {
+                                                zone["gameobjects"]["pony_objects"]["object"].forEach((pony) => {
+                                                    try {
+                                                        pony["pet"]["ownpet"].forEach((element) => {
+                                                            if (!(page in parseData)) {
+                                                                parseData[page] = [];
+                                                            }
+
+                                                            if (!parseData[page].includes(element["@_id"])) {
+                                                                parseData[page].push(element["@_id"]);
+                                                            }
+                                                        });
+                                                    } catch {
+                                                    }
+                                                });
+                                            });
+                                        } catch {
+                                        }
+
+                                        try {
+                                            saveData["mlp_save"]["playerdata"]["storage"]["storeditem"].forEach((stored) => {
+                                                try {
+                                                    stored["pet"]["ownpet"].forEach((element) => {
+                                                        if (!(page in parseData)) {
+                                                            parseData[page] = [];
+                                                        }
+
+                                                        if (!parseData[page].includes(element["@_id"])) {
+                                                            parseData[page].push(element["@_id"]);
+                                                        }
+                                                    });
+                                                } catch {
+                                                }
+                                            });
+                                        } catch {
+                                        }
+                                    }
+
+                                    if (page === "ponyset") {
+                                        try {
+                                            let xhr = new XMLHttpRequest();
+
+                                            xhr.open("GET", "../categoryes/ponyset.json", false);
+
+                                            xhr.addEventListener("load", () => {
+                                                if (xhr.status === 200) {
+                                                    let ponysetData = JSON.parse(xhr.responseText);
+
+                                                    let boughtedList = [];
+
+                                                    saveData["mlp_save"]["ponypartsdata"]["boughtedlist"]["item"].forEach((element) => {
+                                                        if (!boughtedList.includes(element["@_id"])) {
+                                                            boughtedList.push(element["@_id"]);
+                                                        }
+                                                    });
+
+                                                    for (let set in ponysetData) {
+                                                        if (ponysetData[set]["Части"].every((element) => {
+                                                            return boughtedList.includes(element);
+                                                        })) {
+                                                            if (!(page in parseData)) {
+                                                                parseData[page] = [];
+                                                            }
+
+                                                            parseData[page].push(ponysetData[set]["id"]);
+                                                        }
+                                                    }
+                                                }
+                                            });
+
+                                            xhr.send();
+                                        } catch {
+                                        }
+                                    }
+                                }
+
+                                let insertData = {};
+
+                                importData.innerHTML = "";
+
+                                if (Object.keys(parseData).length > 0) {
+                                    for (let item in this.root.categoriesData) {
+                                        let page = this.root.categoriesData[item]["page"];
+
+                                        if ((page in parseData) && (parseData[page].length > 0)) {
+                                            importData.appendChild(createElement("label", {
+                                                class: "menu_user_import_data_label"
+                                            }, (el) => {
+                                                el.appendChild(createElement("input", {
+                                                    type: "checkbox",
+                                                    checked: "true"
+                                                }, (el2) => {
+                                                    insertData[page] = parseData[page];
+
+                                                    el2.addEventListener("change", () => {
+                                                        if (el2.checked) {
+                                                            insertData[page] = parseData[page];
+                                                        } else {
+                                                            delete insertData[page];
+                                                        }
+                                                    });
+                                                }));
+
+                                                el.appendChild(createElement("span", {}, (el2) => {
+                                                    el2.innerText = (item + " (найдено: " + parseData[page].length + ")");
+                                                }));
+                                            }));
+                                        }
+                                    }
+
+                                    importData.appendChild(createElement("span", {
+                                        class: "menu_block_content_login_span"
+                                    }, (el) => {
+                                        el.innerText = "Внимание: импорт заменит все старые данные в выбранных категориях!";
+                                    }));
+
+                                    importData.appendChild(createElement("input", {
+                                        class: "menu_block_content_login_button",
+                                        type: "button",
+                                        value: "Импортировать"
+                                    }, (el) => {
+                                        el.style.width = "auto";
+
+                                        el.addEventListener("click", () => {
+                                            if (Object.keys(insertData).length > 0) {
+                                                if (updateOne.call(this, {
+                                                    "_id": localStorage.getItem("mlplist_user"),
+                                                    "password": localStorage.getItem("mlplist_password")
+                                                }, {
+                                                    "$set": insertData
+                                                })) {
+                                                    importData.innerHTML = "";
+
+                                                    createMessage.call(this, "info", "Данные успешно импортированы.");
+
+                                                    loadUserData.call(this);
+                                                    createTable.call(this);
+                                                } else {
+                                                    createMessage.call(this, "error", "Ошибка соединения! Попробуйте еще раз...");
+                                                }
+                                            } else {
+                                                createMessage.call(this, "alert", "Должна быть выбрана хотябы одна категория!");
+                                            }
+                                        });
+                                    }));
+                                } else {
+                                    importData.innerText = "Обработка завершена. Ничего не найдено.";
+                                }
+                            } catch {
+                                importData.innerText = "Во время обработки файла возникла ошибка. Возможно неверный файл, или данные в нем повреждены...";
+                            }
+                        });
+
+                        reader.readAsText(savefile.files[0]);
+                    } catch {
+                        importData.innerText = "Во время чтения файла возникла ошибка. Возможно неверный файл, или данные в нем повреждены...";
+                    }
+                }
+            });
+
+            this.createUserMenu = true;
+        }
+    } else {
+        createLoginMenu.call(this);
+    }
 }
 
 export function createLoginMenu() {
@@ -751,13 +1239,13 @@ export function register() {
     if (password !== password_2) {
         createMessage.call(this, "alert", "Пароли не совпадают!");
 
-        return false;
+        return null;
     }
 
     if (!(/^[a-zA-Z0-9]+$/.test(login))) {
         createMessage.call(this, "alert", "Логин содержит недопустимые символы!");
 
-        return false;
+        return null;
     }
 
     let user = findOne.call(this, {

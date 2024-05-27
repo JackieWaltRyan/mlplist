@@ -43,7 +43,11 @@ export function zoomIn(event) {
     if ((event.x + 50 + event["srcElement"]["naturalWidth"]) <= scrollWidth) {
         zoom.style.left = ((event.x + 50).toString() + "px");
     } else {
-        zoom.style.left = ((event.x - 50 - event["srcElement"]["naturalWidth"]).toString() + "px");
+        if ((event.x - 50 - event["srcElement"]["naturalWidth"]) >= 0) {
+            zoom.style.left = ((event.x - 50 - event["srcElement"]["naturalWidth"]).toString() + "px");
+        } else {
+            zoom.style.left = (0 + "px");
+        }
     }
 }
 
