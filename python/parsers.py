@@ -52,9 +52,9 @@ def ponypet(item, category):
             pass
 
         if res_image and res_name and (item["ID"] in DATA["shopdata"]):
-            return {"Изображение": res_image,
-                    "Имя": res_name,
-                    "Город": res_sity}
+            return {"image": res_image,
+                    "name": res_name,
+                    "sity": res_sity}
     except Exception:
         return None
 
@@ -89,9 +89,9 @@ def profileavatarframe(item, category):
             pass
 
         if res_image and res_name and (item["ID"] in DATA["shopdata"]):
-            return {"Изображение": res_image,
-                    "Имя": res_name,
-                    "Город": res_sity}
+            return {"image": res_image,
+                    "name": res_name,
+                    "sity": res_sity}
     except Exception:
         return None
 
@@ -126,9 +126,9 @@ def profileavatar(item, category):
             pass
 
         if res_image and res_name and (item["ID"] in DATA["shopdata"]):
-            return {"Изображение": res_image,
-                    "Имя": res_name,
-                    "Город": res_sity}
+            return {"image": res_image,
+                    "name": res_name,
+                    "sity": res_sity}
     except Exception:
         return None
 
@@ -163,9 +163,9 @@ def theme(item, category):
             pass
 
         if res_image and res_name and (item["ID"] in DATA["shopdata"]):
-            return {"Изображение": res_image,
-                    "Имя": res_name,
-                    "Город": res_sity}
+            return {"image": res_image,
+                    "name": res_name,
+                    "sity": res_sity}
     except Exception:
         return None
 
@@ -206,9 +206,9 @@ def pony_house(item, category):
             pass
 
         if res_image and res_name and (res_type == "1") and (item["ID"] in DATA["shopdata"]):
-            return {"Изображение": res_image,
-                    "Имя": res_name,
-                    "Город": res_sity}
+            return {"image": res_image,
+                    "name": res_name,
+                    "sity": res_sity}
     except Exception:
         return None
 
@@ -243,9 +243,9 @@ def pony(item, category):
             pass
 
         if res_image and res_name and (item["ID"] in DATA["shopdata"]):
-            return {"Изображение": res_image,
-                    "Имя": res_name,
-                    "Город": res_sity}
+            return {"image": res_image,
+                    "name": res_name,
+                    "sity": res_sity}
     except Exception:
         return None
 
@@ -301,9 +301,9 @@ def ponyset(item, category):
             pass
 
         if res_image and res_name:
-            return {"Изображение": res_image,
-                    "Имя": res_name,
-                    "Части": res_parts}
+            return {"image": res_image,
+                    "name": res_name,
+                    "parts": res_parts}
     except Exception:
         return None
 
@@ -339,9 +339,9 @@ def path(item, category):
 
         if res_image and res_name and (item.find_all(name="PermitID",
                                                      limit=1)[0]["ID"] in DATA["shopdata"]):
-            return {"Изображение": res_image,
-                    "Имя": res_name,
-                    "Город": res_sity}
+            return {"image": res_image,
+                    "name": res_name,
+                    "sity": res_sity}
     except Exception:
         return None
 
@@ -376,9 +376,9 @@ def playercardbackground(item, category):
             pass
 
         if res_image and res_name and (item["ID"] in DATA["shopdata"]):
-            return {"Изображение": res_image,
-                    "Имя": res_name,
-                    "Город": res_sity}
+            return {"image": res_image,
+                    "name": res_name,
+                    "sity": res_sity}
     except Exception:
         return None
 
@@ -413,9 +413,9 @@ def playercardbackgroundframe(item, category):
             pass
 
         if res_image and res_name and (item["ID"] in DATA["shopdata"]):
-            return {"Изображение": res_image,
-                    "Имя": res_name,
-                    "Город": res_sity}
+            return {"image": res_image,
+                    "name": res_name,
+                    "sity": res_sity}
     except Exception:
         return None
 
@@ -450,8 +450,8 @@ def playercardcutiemark(item, category):
             pass
 
         if res_image and res_name and (item["ID"] in DATA["shopdata"]):
-            return {"Изображение": res_image,
-                    "Имя": res_name,
-                    "Город": res_sity}
+            return {"image": res_image,
+                    "name": res_name,
+                    "sity": res_sity}
     except Exception:
         return None

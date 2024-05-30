@@ -1,5 +1,3 @@
-let WebpackObfuscator = require("webpack-obfuscator");
-
 module.exports = {
     mode: "production",
 
@@ -10,11 +8,7 @@ module.exports = {
     },
 
     output: {
-        filename: "list/mlplist.js",
+        filename: "list/_resources/scripts/index.js",
         library: "MLPlist"
-    },
-
-    plugins: [
-        new WebpackObfuscator()
-    ]
+    }
 };

@@ -3,6 +3,8 @@ DATA = {}
 
 def load_image(image, category):
     try:
+        category = category.lower()
+
         image = image.replace("gui/",
                               "").replace(".png",
                                           "")

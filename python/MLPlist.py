@@ -25,25 +25,25 @@ LANGUAGES = ["arabic.json", "chinese.json", "english.json", "french.json", "germ
 
 def copy_languages_files():
     try:
-        trigger, languages = True, {}
+        trigger, languages, folder = True, {}, "MLPlist/list/_resources/data/languages"
 
         for file in LANGUAGES:
             if exists(path=f"000_and_startup_common/{file}"):
                 print(f"4: Копирование файла 000_and_startup_common/{file}.\n")
 
-                if not exists(path="MLPlist/languages"):
-                    print(f"    Создание папки MLPlist/languages.\n")
+                if not exists(path=folder):
+                    print(f"    Создание папки {folder}.\n")
 
                     try:
-                        makedirs(name="MLPlist/languages")
+                        makedirs(name=folder)
                     except Exception:
-                        print(f"[ERROR] Во время создания папки MLPlist/languages возникла ошибка. "
+                        print(f"[ERROR] Во время создания папки {folder} возникла ошибка. "
                               f"Возможно нет прав на создания папок.\n")
 
                         trigger = False
 
                 copy(src=f"000_and_startup_common/{file}",
-                     dst=f"MLPlist/languages/{file}")
+                     dst=f"{folder}/{file}")
 
                 with open(file=f"000_and_startup_common/{file}",
                           mode="r",
@@ -61,14 +61,13 @@ def copy_languages_files():
         languages = dict(sorted(languages.items(),
                                 key=lambda x: x[0].lower()))
 
-        print("5: Создание файла MLPlist/languages.json.\n")
+        print(f"5: Создание файла {folder}.json.\n")
 
-        with open(file="MLPlist/languages.json",
+        with open(file=f"{folder}.json",
                   mode="w",
                   encoding="UTF-8") as languages_json:
             dump(obj=languages,
                  fp=languages_json,
-                 indent=4,
                  ensure_ascii=False)
 
         return trigger
@@ -81,7 +80,7 @@ def copy_languages_files():
 
 def parse_mapzones():
     try:
-        mapzones_list = {}
+        mapzones_list, folder = {}, "MLPlist/list/_resources/data"
 
         if exists(path="000_and_startup_common/mapzones.xml"):
             print("6: Обработка файла 000_and_startup_common/mapzones.xml.\n")
@@ -103,14 +102,13 @@ def parse_mapzones():
                     else:
                         mapzones_list[name].append(item["ID"])
 
-                print("7: Создание файла MLPlist/mapzones.json.\n")
+                print(f"7: Создание файла {folder}/mapzones.json.\n")
 
-                with open(file="MLPlist/mapzones.json",
+                with open(file=f"{folder}/mapzones.json",
                           mode="w",
                           encoding="UTF-8") as mapzones_json:
                     dump(obj=mapzones_list,
                          fp=mapzones_json,
-                         indent=4,
                          ensure_ascii=False)
 
                 return True
@@ -122,6 +120,60 @@ def parse_mapzones():
             return False
     except Exception:
         print("[ERROR] Во время обработки файла 000_and_startup_common/mapzones.xml возникла ошибка. "
+              "Возможно данные в файле повреждены или нет прав на чтение файлов.\n")
+
+        return False
+
+
+def parse_collectiondata(data):
+    try:
+        if exists(path="000_and_mlpextra_common/collectionData.xml"):
+            print("9: Обработка файла 000_and_mlpextra_common/collectionData.xml.\n")
+
+            with open(file="000_and_mlpextra_common/collectionData.xml",
+                      mode="r",
+                      encoding="UTF-8") as collection_xml:
+                soup = BeautifulSoup(markup=collection_xml.read(),
+                                     features="xml")
+
+                print(f"    Поиск всех Collection...")
+
+                items, i, ii, res = soup.find_all(name="CollectionData",
+                                                  limit=1)[0], 1, 1, {}
+
+                for item in items:
+                    print(f"\r        Обработано {ii} из {len(items)}.",
+                          end="")
+
+                    if len(item) > 1:
+                        res.update({i: {"id": item["collectionId"],
+                                        "image": load_image(image="playerdetails_collections",
+                                                            category="collection"),
+                                        "name": item["locString"],
+                                        "sity": None}})
+
+                        i += 1
+
+                    ii += 1
+
+                data.update({"Коллекции": {"image": res[1]["image"],
+                                           "page": "collection",
+                                           "data": res}})
+
+                print("")
+                print("")
+
+                return True
+        else:
+            print("[ERROR] Отсутствует папка 000_and_mlpextra_common или в ней нет файла collectionData.xml. "
+                  "Разархивируйте архив 000_and_mlpextra_common.ark используя программу ARKdumper. "
+                  "В настройках программы ARKdumper обязательно установите Convert = 1.\n")
+
+            return False
+    except Exception:
+        print("")
+
+        print("[ERROR] Во время обработки файла 000_and_mlpextra_common/collectionData.xml возникла ошибка. "
               "Возможно данные в файле повреждены или нет прав на чтение файлов.\n")
 
         return False
@@ -232,48 +284,42 @@ def parse_shopdata():
 
 def create_files_html(data):
     try:
-        trigger, categoryes = True, {}
+        trigger, folder = True, "MLPlist/list/_resources/data"
+
+        trigger = parse_collectiondata(data=data)
+
+        categoryes = dict(sorted(data.items(),
+                                 key=lambda x: x[0].lower()))
+
+        print(f"10: Создание файла {folder}/categoryes.json.\n")
+
+        try:
+            with open(file=f"{folder}/categoryes.json",
+                      mode="w",
+                      encoding="UTF-8") as categoryes_json:
+                dump(obj=categoryes,
+                     fp=categoryes_json,
+                     ensure_ascii=False)
+        except Exception:
+            print(f"[WARNING] Во время создания файла {folder}/categoryes.json возникла ошибка. "
+                  f"Возможно нет прав на создания файлов. "
+                  f"Файл пропущен.\n")
+
+            trigger = False
 
         for cat in data:
-            print(f"9: Создание файла MLPlist/categoryes/{cat.lower()}.json.\n")
+            category = data[cat]["page"]
 
-            if not exists(path="MLPlist/categoryes"):
-                print(f"    Создание папки MLPlist/categoryes.\n")
+            folder_img = f"{folder[:-5]}/images"
+
+            if not exists(path=folder_img):
+                print(f"    Создание папки {folder_img}.\n")
 
                 try:
-                    makedirs(name="MLPlist/categoryes")
+                    makedirs(name=folder_img)
                 except Exception:
-                    print(f"[ERROR] Во время создания папки MLPlist/categoryes возникла ошибка. "
+                    print(f"[ERROR] Во время создания папки {folder_img} возникла ошибка. "
                           f"Возможно нет прав на создания папок.\n")
-
-                    trigger = False
-
-            try:
-                with open(file=f"MLPlist/categoryes/{cat.lower()}.json",
-                          mode="w",
-                          encoding="UTF-8") as cat_json:
-                    dump(obj=data[cat],
-                         fp=cat_json,
-                         indent=4,
-                         ensure_ascii=False)
-
-                categoryes.update({DATA["descriptions"][cat]: {"image": data[cat][1]["Изображение"],
-                                                               "page": cat.lower()}})
-            except Exception:
-                print(f"[WARNING] Во время создания файла MLPlist/{cat.lower()}.json возникла ошибка. "
-                      f"Возможно нет прав на создания файлов. "
-                      f"Файл пропущен.\n")
-
-                trigger = False
-
-            if not exists(path="MLPlist/resources"):
-                print("    Создание папки MLPlist/resources.\n")
-
-                try:
-                    makedirs(name="MLPlist/resources")
-                except Exception:
-                    print("[ERROR] Во время создания папки MLPlist/resources возникла ошибка. "
-                          "Возможно нет прав на создания папок.\n")
 
                     trigger = False
 
@@ -282,16 +328,16 @@ def create_files_html(data):
             ii = 1
 
             load_image(image="mlp_splash",
-                       category=cat)
+                       category=category)
 
             try:
-                for file in DATA["hosting"][cat]:
-                    print(f"\r        Обработано {ii} из {len(DATA['hosting'][cat])}.",
+                for file in DATA["hosting"][category]:
+                    print(f"\r        Обработано {ii} из {len(DATA['hosting'][category])}.",
                           end="")
 
-                    with open(file=f"MLPlist/resources/{file}",
+                    with open(file=f"{folder_img}/{file}",
                               mode="wb") as output_res_file:
-                        output_res_file.write(DATA["hosting"][cat][file])
+                        output_res_file.write(DATA["hosting"][category][file])
 
                     ii += 1
 
@@ -299,26 +345,13 @@ def create_files_html(data):
             except Exception:
                 print("")
 
-                print(f"[WARNING] Во время сохранениея ресурсов файла MLPlist/resources/{cat}.json возникла ошибка. "
+                print(f"[WARNING] Во время сохранениея ресурсов категории {category} возникла ошибка. "
                       f"Возможно нет прав на создания файлов. "
                       f"Изображения в этом файле могут отсутствовать!\n")
 
                 trigger = False
 
             print("")
-
-        categoryes = dict(sorted(categoryes.items(),
-                                 key=lambda x: x[0].lower()))
-
-        print(f"10: Создание файла MLPlist/categoryes.json.\n")
-
-        with open(file="MLPlist/categoryes.json",
-                  mode="w",
-                  encoding="UTF-8") as categoryes_json:
-            dump(obj=categoryes,
-                 fp=categoryes_json,
-                 indent=4,
-                 ensure_ascii=False)
 
         return trigger
     except Exception:
@@ -373,7 +406,9 @@ def parse_gameobjectdata():
 
                             ii += 1
 
-                        all_data.update({cat: data})
+                        all_data.update({DATA["descriptions"][cat]: {"image": data[1]["image"],
+                                                                     "page": cat.lower(),
+                                                                     "data": data}})
 
                         print("")
                     except Exception:
@@ -412,17 +447,6 @@ if __name__ == "__main__":
             except Exception:
                 print(f"[ERROR] Во время удаления папки MLPlist возникла ошибка. "
                       f"Возможно нет прав на удаления папок.\n")
-
-                TRIGGER = False
-
-        if not exists(path="MLPlist"):
-            print(f"1: Создание папки MLPlist.\n")
-
-            try:
-                makedirs(name="MLPlist")
-            except Exception:
-                print(f"[ERROR] Во время создания папки MLPlist возникла ошибка. "
-                      f"Возможно нет прав на создания папок.\n")
 
                 TRIGGER = False
 
