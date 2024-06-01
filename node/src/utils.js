@@ -61,12 +61,18 @@ export function zoomOut() {
 export class updateTitle {
     constructor() {
         this.title = document.getElementsByTagName("title")[0];
+        this.headerTitle = document.getElementById("header_title");
 
         this.category = null;
         this.user = null;
+
+        this.add = null;
+        this.all = null;
     }
 
     update(data) {
+        this.headerTitle.style.display = "block";
+
         if ("category" in data) {
             this.category = data["category"];
         }
@@ -78,14 +84,34 @@ export class updateTitle {
         let text = "Список";
 
         if (this.category) {
-            text += (" " + this.category);
+            text += (" \"" + this.category + "\"");
         }
 
         if (this.user) {
-            text += (" пользователя " + this.user);
+            text += (" пользователя \"" + this.user + "\"");
         }
 
         this.title.innerText = text;
+
+        if ("all" in data) {
+            this.all = parseInt(data["all"]);
+        }
+
+        if ("add" in data) {
+            if (data["add"] === "+") {
+                this.add += 1;
+            } else if (data["add"] === "-") {
+                this.add -= 1;
+            } else {
+                this.add = parseInt(data["add"]);
+            }
+        }
+
+        if (this.add && this.all) {
+            text += (" (Имеется: " + this.add + ", Не имеется: " + (this.all - this.add) + ")");
+        }
+
+        this.headerTitle.innerText = text;
     }
 }
 

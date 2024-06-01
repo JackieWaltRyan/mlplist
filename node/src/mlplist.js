@@ -8,6 +8,7 @@ import {
     createLanguagesMenu,
     createLoginMenu,
     createSortMenu,
+    createStyleMenu,
     createUserMenu
 } from "./menu";
 
@@ -22,6 +23,7 @@ export function init() {
             available: null,
             sity: []
         },
+
         sorts: {
             reverse: false,
             name: null
@@ -32,6 +34,7 @@ export function init() {
     createLanguagesMenu.call(this);
     createFilterMenu.call(this);
     createSortMenu.call(this);
+    createStyleMenu.call(this);
 
     document.getElementById("header_search").addEventListener("keyup", (event) => {
         clearTimeout(this.searchTimeout);
@@ -188,8 +191,16 @@ export function createTable(search = (this.getURL.searchParams.has("search") ? d
                     }
                 }
 
+                let add = 0;
+
                 for (let item of itemList) {
                     try {
+                        if (this.root.userData && (page in this.root.userData)) {
+                            if (this.root.userData[page].includes(catData[item]["id"])) {
+                                add += 1;
+                            }
+                        }
+
                         if (search) {
                             let search_input = document.getElementById("header_search");
 
@@ -218,6 +229,10 @@ export function createTable(search = (this.getURL.searchParams.has("search") ? d
 
                                 history.pushState(null, null, this.getURL.href);
                             }
+                        }
+
+                        if (!this.root.langData[catData[item]["name"]]) {
+                            continue;
                         }
 
                         if ((this.root.filter.available !== null) && this.root.userData && (page in this.root.userData)) {
@@ -326,6 +341,10 @@ export function createTable(search = (this.getURL.searchParams.has("search") ? d
                                                     el2.classList.remove("content_item_button_red");
                                                     el2.classList.add("content_item_button_green");
                                                     el2.value = "Добавить";
+
+                                                    this.title.update({
+                                                        add: "-"
+                                                    });
                                                 } else {
                                                     createMessage.call(this, "error", "Во время удаления элемента произошла ошибка!");
                                                 }
@@ -347,6 +366,10 @@ export function createTable(search = (this.getURL.searchParams.has("search") ? d
                                                     el2.classList.remove("content_item_button_green");
                                                     el2.classList.add("content_item_button_red");
                                                     el2.value = "Удалить";
+
+                                                    this.title.update({
+                                                        add: "+"
+                                                    });
                                                 } else {
                                                     createMessage.call(this, "error", "Во время добавления элемента произошла ошибка!");
                                                 }
@@ -371,6 +394,10 @@ export function createTable(search = (this.getURL.searchParams.has("search") ? d
                 setTimeout(() => {
                     this.loading.style.display = "none";
                 }, 250);
+
+                this.title.update({
+                    add: add
+                });
             }
         } catch {
         }

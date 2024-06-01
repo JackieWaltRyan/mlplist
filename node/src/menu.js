@@ -58,7 +58,8 @@ export function createCategoriesMenu() {
                             headerLists.value = ("Список: " + item);
 
                             this.title.update({
-                                category: item
+                                category: item,
+                                all: Object.keys(this.root.categoriesData[item]["data"]).length
                             });
 
                             for (let i in itemList) {
@@ -82,7 +83,8 @@ export function createCategoriesMenu() {
                                 history.pushState(null, null, this.getURL.href);
 
                                 this.title.update({
-                                    category: item
+                                    category: item,
+                                    all: Object.keys(this.root.categoriesData[item]["data"]).length
                                 });
 
                                 for (let i in itemList) {
@@ -796,7 +798,7 @@ export function createUserMenu() {
 
                                                 saveData["mlp_save"]["ponypartsdata"]["boughtedlist"]["item"].forEach((element) => {
                                                     try {
-                                                        if (!boughtedList.includes(element["@_id"]) && dataList.includes(element["@_id"])) {
+                                                        if (!boughtedList.includes(element["@_id"])) {
                                                             boughtedList.push(element["@_id"]);
                                                         }
                                                     } catch {
@@ -929,6 +931,8 @@ export function createUserMenu() {
                     } catch {
                         importData.innerText = "Во время чтения файла возникла ошибка. Возможно неверный файл, или данные в нем повреждены...";
                     }
+                } else {
+                    importData.innerHTML = "";
                 }
             });
 
@@ -1066,5 +1070,41 @@ export function createSortMenu() {
         }
 
         createTable.call(this);
+    });
+}
+
+export function createStyleMenu() {
+    let headerStyle = document.getElementById("header_style");
+    let menuStyle = document.getElementById("menu_style");
+
+    headerStyle.addEventListener("click", () => {
+        menuStyle.style.display = "flex";
+    });
+
+    menuStyle.addEventListener("click", (event) => {
+        if (event.target === menuStyle) {
+            menuStyle.style.display = "none";
+        }
+    });
+
+    document.getElementById("menu_style_close").addEventListener("click", () => {
+        menuStyle.style.display = "none";
+    });
+
+    let menuStyleTrue = document.getElementById("menu_style_true");
+    let menuStyleFalse = document.getElementById("menu_style_false");
+
+    let content = document.getElementById("content");
+
+    menuStyleTrue.addEventListener("change", () => {
+        if (menuStyleTrue.checked) {
+            content.setAttribute("line", "false");
+        }
+    });
+
+    menuStyleFalse.addEventListener("change", () => {
+        if (menuStyleFalse.checked) {
+            content.setAttribute("line", "true");
+        }
     });
 }

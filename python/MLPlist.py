@@ -48,9 +48,12 @@ def copy_languages_files():
                 with open(file=f"000_and_startup_common/{file}",
                           mode="r",
                           encoding="UTF-8") as language_file:
-                    data = loads(s=language_file.read())["DEV_ID"]
+                    data = loads(s=language_file.read())
 
-                    languages.update({data: file})
+                    languages.update({data["DEV_ID"]: file})
+
+                    if file == "english.json":
+                        DATA.update({"english": data})
             else:
                 print(f"[ERROR] Отсутствует папка 000_and_startup_common или в ней нет файла {file}. "
                       f"Разархивируйте архив 000_and_startup_common.ark используя программу ARKdumper. "
@@ -398,7 +401,8 @@ def parse_gameobjectdata():
                                                      category=cat)
 
                                 if res:
-                                    res.update({"id": item["ID"]})
+                                    if "id" not in res:
+                                        res.update({"id": item["ID"]})
 
                                     data.update({i: res})
 

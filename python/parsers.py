@@ -51,7 +51,7 @@ def ponypet(item, category):
         except Exception:
             pass
 
-        if res_image and res_name and (item["ID"] in DATA["shopdata"]):
+        if res_image and res_name and (item["ID"] in DATA["shopdata"]) and (res_name in DATA["english"]):
             return {"image": res_image,
                     "name": res_name,
                     "sity": res_sity}
@@ -88,7 +88,7 @@ def profileavatarframe(item, category):
         except Exception:
             pass
 
-        if res_image and res_name and (item["ID"] in DATA["shopdata"]):
+        if res_image and res_name and (item["ID"] in DATA["shopdata"]) and (res_name in DATA["english"]):
             return {"image": res_image,
                     "name": res_name,
                     "sity": res_sity}
@@ -125,7 +125,7 @@ def profileavatar(item, category):
         except Exception:
             pass
 
-        if res_image and res_name and (item["ID"] in DATA["shopdata"]):
+        if res_image and res_name and (item["ID"] in DATA["shopdata"]) and (res_name in DATA["english"]):
             return {"image": res_image,
                     "name": res_name,
                     "sity": res_sity}
@@ -162,7 +162,7 @@ def theme(item, category):
         except Exception:
             pass
 
-        if res_image and res_name and (item["ID"] in DATA["shopdata"]):
+        if res_image and res_name and (item["ID"] in DATA["shopdata"]) and (res_name in DATA["english"]):
             return {"image": res_image,
                     "name": res_name,
                     "sity": res_sity}
@@ -205,7 +205,8 @@ def pony_house(item, category):
         except Exception:
             pass
 
-        if res_image and res_name and (res_type == "1") and (item["ID"] in DATA["shopdata"]):
+        if res_image and res_name and (res_type == "1") and (item["ID"] in DATA["shopdata"]) and (
+                res_name in DATA["english"]):
             return {"image": res_image,
                     "name": res_name,
                     "sity": res_sity}
@@ -242,7 +243,7 @@ def pony(item, category):
         except Exception:
             pass
 
-        if res_image and res_name and (item["ID"] in DATA["shopdata"]):
+        if res_image and res_name and (item["ID"] in DATA["shopdata"]) and (res_name in DATA["english"]):
             return {"image": res_image,
                     "name": res_name,
                     "sity": res_sity}
@@ -300,7 +301,7 @@ def ponyset(item, category):
         except Exception:
             pass
 
-        if res_image and res_name:
+        if res_image and res_name and (res_name in DATA["english"]):
             return {"image": res_image,
                     "name": res_name,
                     "parts": res_parts}
@@ -312,7 +313,7 @@ def ponyset(item, category):
         description="Дорожки")
 def path(item, category):
     try:
-        res_image, res_name, res_sity = "", "", []
+        res_image, res_name, res_sity, res_id = "", "", [], ""
 
         # gameobjectdata:
         try:
@@ -330,18 +331,23 @@ def path(item, category):
         except Exception:
             pass
 
-        # shopdata:
         try:
-            res_sity = DATA["shopdata"][item.find_all(name="PermitID",
-                                                      limit=1)[0]["ID"]]
+            res_id = item.find_all(name="PermitID",
+                                   limit=1)[0]["ID"]
         except Exception:
             pass
 
-        if res_image and res_name and (item.find_all(name="PermitID",
-                                                     limit=1)[0]["ID"] in DATA["shopdata"]):
+        # shopdata:
+        try:
+            res_sity = DATA["shopdata"][res_id]
+        except Exception:
+            pass
+
+        if res_image and res_name and res_id and (res_id in DATA["shopdata"]) and (res_name in DATA["english"]):
             return {"image": res_image,
                     "name": res_name,
-                    "sity": res_sity}
+                    "sity": res_sity,
+                    "id": res_id}
     except Exception:
         return None
 
@@ -375,7 +381,7 @@ def playercardbackground(item, category):
         except Exception:
             pass
 
-        if res_image and res_name and (item["ID"] in DATA["shopdata"]):
+        if res_image and res_name and (item["ID"] in DATA["shopdata"]) and (res_name in DATA["english"]):
             return {"image": res_image,
                     "name": res_name,
                     "sity": res_sity}
@@ -412,7 +418,7 @@ def playercardbackgroundframe(item, category):
         except Exception:
             pass
 
-        if res_image and res_name and (item["ID"] in DATA["shopdata"]):
+        if res_image and res_name and (item["ID"] in DATA["shopdata"]) and (res_name in DATA["english"]):
             return {"image": res_image,
                     "name": res_name,
                     "sity": res_sity}
@@ -449,7 +455,7 @@ def playercardcutiemark(item, category):
         except Exception:
             pass
 
-        if res_image and res_name and (item["ID"] in DATA["shopdata"]):
+        if res_image and res_name and (item["ID"] in DATA["shopdata"]) and (res_name in DATA["english"]):
             return {"image": res_image,
                     "name": res_name,
                     "sity": res_sity}
