@@ -128,6 +128,43 @@ def parse_mapzones():
         return False
 
 
+def parse_version():
+    try:
+        folder = "MLPlist/list/_resources/data"
+
+        if exists(path="000_and_mlpextra_common/data_ver.xml"):
+            print("6: Обработка файла 000_and_mlpextra_common/data_ver.xml.\n")
+
+            with open(file="000_and_mlpextra_common/data_ver.xml",
+                      mode="r",
+                      encoding="UTF-8") as version_xml:
+                soup = BeautifulSoup(markup=version_xml.read(),
+                                     features="xml").find_all(name="Version",
+                                                              limit=1)[0]["Value"]
+
+                print(f"7: Создание файла {folder}/version.json.\n")
+
+                with open(file=f"{folder}/version.json",
+                          mode="w",
+                          encoding="UTF-8") as version_json:
+                    dump(obj={"version": soup},
+                         fp=version_json,
+                         ensure_ascii=False)
+
+                return True
+        else:
+            print("[ERROR] Отсутствует папка 000_and_mlpextra_common или в ней нет файла data_ver.xml. "
+                  "Разархивируйте архив 000_and_mlpextra_common.ark используя программу ARKdumper. "
+                  "В настройках программы ARKdumper обязательно установите Convert = 1.\n")
+
+            return False
+    except Exception:
+        print("[ERROR] Во время обработки файла 000_and_mlpextra_common/data_ver.xml возникла ошибка. "
+              "Возможно данные в файле повреждены или нет прав на чтение файлов.\n")
+
+        return False
+
+
 def parse_collectiondata(data):
     try:
         if exists(path="000_and_mlpextra_common/collectionData.xml"):
@@ -457,7 +494,7 @@ if __name__ == "__main__":
         DATA.update({"images": find_image_files()})
         DATA.update({"shopdata": parse_shopdata()})
 
-        if TRIGGER and copy_languages_files() and parse_mapzones() and parse_gameobjectdata():
+        if TRIGGER and copy_languages_files() and parse_mapzones() and parse_version() and parse_gameobjectdata():
             exit()
         else:
             raise Exception

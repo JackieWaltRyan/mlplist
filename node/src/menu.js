@@ -2,7 +2,7 @@ import sha256 from "crypto-js/sha256";
 import {XMLParser} from "fast-xml-parser";
 
 import {createElement, createMessage, titleCase} from "./utils";
-import {createTable, loadLanguageFile, loadUserData, login, register} from "./mlplist";
+import {createTable, loadLanguageFile, loadUserData, loadVersion, login, register} from "./mlplist";
 import {findOne, updateOne} from "./mongo";
 
 
@@ -935,6 +935,8 @@ export function createUserMenu() {
                     importData.innerHTML = "";
                 }
             });
+
+            loadVersion.call(this);
 
             this.createUserMenu = true;
         }

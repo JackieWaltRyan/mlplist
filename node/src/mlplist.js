@@ -145,6 +145,22 @@ export function loadUserData() {
     }
 }
 
+export function loadVersion() {
+    let xhr = new XMLHttpRequest();
+
+    xhr.open("GET", "_resources/data/version.json", false);
+
+    xhr.addEventListener("load", () => {
+        if (xhr.status === 200) {
+            let version = JSON.parse(xhr.responseText);
+
+            document.getElementById("version").innerText = "На данный момент списки созданы для версии игры " + version["version"] + ".";
+        }
+    });
+
+    xhr.send();
+}
+
 export function createTable(search = (this.getURL.searchParams.has("search") ? decodeURIComponent(this.getURL.searchParams.get("search")) : "")) {
     let content = document.getElementById("content");
 
