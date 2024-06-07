@@ -25,7 +25,9 @@ export function findOne(filter) {
         xhr.send(JSON.stringify({
             "filter": filter
         }));
-    } catch {
+    } catch (e) {
+        console.error(e);
+
         data = null;
     }
 
@@ -53,7 +55,9 @@ export function insertOne(document) {
         xhr.send(JSON.stringify({
             "document": document
         }));
-    } catch {
+    } catch (e) {
+        console.error(e);
+
         data = false;
     }
 
@@ -82,7 +86,9 @@ export function updateOne(filter, update) {
             "filter": filter,
             "update": update
         }));
-    } catch {
+    } catch (e) {
+        console.error(e);
+
         data = false;
     }
 

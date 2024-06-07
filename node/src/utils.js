@@ -60,7 +60,7 @@ export function zoomOut() {
 
 export class updateTitle {
     constructor() {
-        this.title = document.getElementsByTagName("title")[0];
+        this.title = document.getElementById("title");
         this.headerTitle = document.getElementById("header_title");
 
         this.category = null;

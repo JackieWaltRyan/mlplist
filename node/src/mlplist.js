@@ -1,12 +1,9 @@
-import sha256 from "crypto-js/sha256";
-
-import {findOne, insertOne, updateOne} from "./mongo";
+import {findOne, updateOne} from "./mongo";
 import {createElement, createMessage, updateTitle, zoomIn, zoomOut} from "./utils";
 import {
     createCategoriesMenu,
     createFilterMenu,
     createLanguagesMenu,
-    createLoginMenu,
     createSortMenu,
     createStyleMenu,
     createUserMenu
@@ -15,10 +12,12 @@ import {
 export function init() {
     this.getURL = new URL(location.href);
     this.title = new updateTitle();
-    this.searchTimeout = null;
-    this.loading = document.getElementById("loading");
 
     this.root = {
+        loading: document.getElementById("loading"),
+
+        searchTimeout: null,
+
         filter: {
             available: null,
             sity: []
@@ -30,34 +29,66 @@ export function init() {
         }
     };
 
+    if (!this.getURL.searchParams.has("page")) {
+        this.getURL.searchParams.set("page", encodeURIComponent("profileavatar"));
+    }
+
+    if (!this.getURL.searchParams.has("language")) {
+        this.getURL.searchParams.set("language", encodeURIComponent("russian"));
+    }
+
+    if (!this.getURL.searchParams.has("sort")) {
+        this.getURL.searchParams.set("sort", encodeURIComponent("numas"));
+    }
+
+    if (!this.getURL.searchParams.has("style")) {
+        this.getURL.searchParams.set("style", encodeURIComponent("tiles"));
+    }
+
+    history.pushState(null, null, this.getURL.href);
+
     createCategoriesMenu.call(this);
     createLanguagesMenu.call(this);
     createFilterMenu.call(this);
     createSortMenu.call(this);
     createStyleMenu.call(this);
 
-    document.getElementById("header_search").addEventListener("keyup", (event) => {
-        clearTimeout(this.searchTimeout);
+    document.getElementById("header_search").addEventListener("input", (event) => {
+        clearTimeout(this.root.searchTimeout);
 
-        this.searchTimeout = setTimeout(() => {
-            this.loading.style.display = "flex";
+        this.root.searchTimeout = setTimeout(() => {
+            this.root.loading.style.display = "flex";
 
-            createTable.call(this, event.target.value);
+            if (event["target"]["value"]) {
+                this.getURL.searchParams.set("search", encodeURIComponent(event["target"]["value"]));
+
+                history.pushState(null, null, this.getURL.href);
+            } else {
+                if (this.getURL.searchParams.has("search")) {
+                    this.getURL.searchParams.delete("search");
+
+                    history.pushState(null, null, this.getURL.href);
+                }
+            }
+
+            createTable.call(this);
         }, 2000);
     });
 
+    loadVersion.call(this);
     loadUserData.call(this);
+
     createTable.call(this);
 }
 
 export function loadLanguageFile() {
     let xhr = new XMLHttpRequest();
 
-    xhr.open("GET", ("_resources/data/languages/" + localStorage.getItem("mlplist_language")), false);
+    xhr.open("GET", ("_resources/data/languages/" + decodeURIComponent(this.getURL.searchParams.get("language")) + ".json"), false);
 
     xhr.addEventListener("load", () => {
         if (xhr.status === 200) {
-            this.root.langData = JSON.parse(xhr.responseText);
+            this.root.currentLanguagesData = JSON.parse(xhr.responseText);
         } else {
             setTimeout(() => {
                 loadLanguageFile.call(this);
@@ -75,7 +106,7 @@ export function loadLanguageFile() {
 }
 
 export function loadUserData() {
-    if (!this.getURL.searchParams.get("user")) {
+    if (!this.getURL.searchParams.has("user")) {
         if (localStorage.getItem("mlplist_user")) {
             this.getURL.searchParams.set("user", localStorage.getItem("mlplist_user"));
 
@@ -83,7 +114,7 @@ export function loadUserData() {
         }
     }
 
-    if (this.getURL.searchParams.get("user")) {
+    if (this.getURL.searchParams.has("user")) {
         this.root.userData = findOne.call(this, {
             "_id": decodeURIComponent(this.getURL.searchParams.get("user"))
         });
@@ -141,7 +172,7 @@ export function loadUserData() {
             user: null
         });
 
-        createLoginMenu.call(this);
+        createUserMenu.call(this);
     }
 }
 
@@ -152,26 +183,26 @@ export function loadVersion() {
 
     xhr.addEventListener("load", () => {
         if (xhr.status === 200) {
-            let version = JSON.parse(xhr.responseText);
-
-            document.getElementById("version").innerText = "На данный момент списки созданы для версии игры " + version["version"] + ".";
+            this.root.version = JSON.parse(xhr.responseText)["version"];
         }
     });
 
     xhr.send();
 }
 
-export function createTable(search = (this.getURL.searchParams.has("search") ? decodeURIComponent(this.getURL.searchParams.get("search")) : "")) {
+export function createTable() {
     let content = document.getElementById("content");
 
     content.innerHTML = "";
 
-    if (!this.root.langData) {
+    if (!this.root.currentLanguagesData) {
         loadLanguageFile.call(this);
 
         setTimeout(() => {
-            createTable.call(this, search);
+            createTable.call(this);
         }, 1000);
+
+        return null;
     }
 
     for (let cat in this.root.categoriesData) {
@@ -191,11 +222,11 @@ export function createTable(search = (this.getURL.searchParams.has("search") ? d
 
                 if (this.root.sorts.name !== null) {
                     itemList = Object.keys(catData).sort((a, b) => {
-                        if (this.root.langData[catData[a]["name"]] > this.root.langData[catData[b]["name"]]) {
+                        if (this.root.currentLanguagesData[catData[a]["name"]] > this.root.currentLanguagesData[catData[b]["name"]]) {
                             return 1;
                         }
 
-                        if (this.root.langData[catData[a]["name"]] < this.root.langData[catData[b]["name"]]) {
+                        if (this.root.currentLanguagesData[catData[a]["name"]] < this.root.currentLanguagesData[catData[b]["name"]]) {
                             return -1;
                         }
 
@@ -217,37 +248,25 @@ export function createTable(search = (this.getURL.searchParams.has("search") ? d
                             }
                         }
 
-                        if (search) {
+                        if (this.getURL.searchParams.has("search")) {
+                            let search = decodeURIComponent(this.getURL.searchParams.get("search"));
+
                             let search_input = document.getElementById("header_search");
 
                             if (search_input.value !== search) {
                                 search_input.value = search;
                             }
 
-                            if (decodeURIComponent(this.getURL.searchParams.get("search")) !== search) {
-                                this.getURL.searchParams.set("search", encodeURIComponent(search));
+                            let text = (item + this.root.currentLanguagesData[catData[item]["name"]]);
 
-                                history.pushState(null, null, this.getURL.href);
-                            }
-
-                            let text = (item + this.root.langData[catData[item]["name"]]);
-
-                            let result = search.split(",").find((item) => {
+                            if (!search.split(",").find((item) => {
                                 return text.toLowerCase().includes(item.trim().toLowerCase());
-                            })
-
-                            if (!result) {
+                            })) {
                                 continue;
-                            }
-                        } else {
-                            if (this.getURL.searchParams.has("search")) {
-                                this.getURL.searchParams.delete("search");
-
-                                history.pushState(null, null, this.getURL.href);
                             }
                         }
 
-                        if (!this.root.langData[catData[item]["name"]]) {
+                        if (!this.root.currentLanguagesData[catData[item]["name"]]) {
                             continue;
                         }
 
@@ -273,7 +292,8 @@ export function createTable(search = (this.getURL.searchParams.has("search") ? d
                                     if (trigger && this.root.filter.sity.includes(element)) {
                                         trigger = false;
                                     }
-                                } catch {
+                                } catch (e) {
+                                    console.error(e);
                                 }
                             });
 
@@ -313,7 +333,7 @@ export function createTable(search = (this.getURL.searchParams.has("search") ? d
                                 class: "content_item_name copy",
                                 title: "Скопировать"
                             }, (el2) => {
-                                el2.innerText = this.root.langData[catData[item]["name"]];
+                                el2.innerText = this.root.currentLanguagesData[catData[item]["name"]];
 
                                 el2.addEventListener("click", () => {
                                     navigator.clipboard.writeText(el2.innerText).then(r => r);
@@ -350,7 +370,10 @@ export function createTable(search = (this.getURL.searchParams.has("search") ? d
                                                     "$pull": data
                                                 })) {
                                                     let pos = this.root.userData[page].indexOf(catData[item]["id"]);
-                                                    this.root.userData[page].splice(pos, 1);
+
+                                                    if (pos !== -1) {
+                                                        this.root.userData[page].splice(pos, 1);
+                                                    }
 
                                                     el.classList.remove("content_item_green");
 
@@ -395,111 +418,27 @@ export function createTable(search = (this.getURL.searchParams.has("search") ? d
                                 }
                             }
                         }));
-                    } catch {
+                    } catch (e) {
+                        console.error(e);
                     }
                 }
 
-                let filterTitle = document.getElementById("menu_filter_title");
-
                 if ((this.root.filter.available !== null) || (this.root.filter.sity.length > 0)) {
-                    filterTitle.innerText = "Фильтр (найдено: " + content.children.length + "):";
+                    this.root.filterMenu.changeName("Фильтр: Найдено " + content.children.length);
                 } else {
-                    filterTitle.innerText = "Фильтр:";
+                    this.root.filterMenu.changeName("Фильтр");
                 }
 
                 setTimeout(() => {
-                    this.loading.style.display = "none";
+                    this.root.loading.style.display = "none";
                 }, 250);
 
                 this.title.update({
                     add: add
                 });
             }
-        } catch {
-        }
-    }
-}
-
-export function login() {
-    let login = document.getElementById("menu_login_value_login").value;
-    let password = sha256(document.getElementById("menu_login_value_password").value).toString();
-
-    let user = findOne.call(this, {
-        "_id": login,
-        "password": password
-    });
-
-    if (user === null) {
-        createMessage.call(this, "error", "Ошибка соединения! Попробуйте еще раз...");
-
-        return null;
-    }
-
-    if (user) {
-        this.loading.style.display = "flex";
-
-        localStorage.setItem("mlplist_user", login);
-        localStorage.setItem("mlplist_password", password);
-
-        document.getElementById("menu_login").style.display = "none";
-
-        createMessage.call(this, "info", "Добро пожаловать, " + user["_id"]);
-
-        loadUserData.call(this);
-        createTable.call(this);
-    } else {
-        createMessage.call(this, "alert", "Логин/Пароль неверные!");
-    }
-}
-
-export function register() {
-    let login = document.getElementById("menu_register_value_login").value;
-    let password = sha256(document.getElementById("menu_register_value_password").value).toString();
-    let password_2 = sha256(document.getElementById("menu_register_value_password_2").value).toString();
-
-    if (password !== password_2) {
-        createMessage.call(this, "alert", "Пароли не совпадают!");
-
-        return null;
-    }
-
-    if (!(/^[a-zA-Z0-9]+$/.test(login))) {
-        createMessage.call(this, "alert", "Логин содержит недопустимые символы!");
-
-        return null;
-    }
-
-    let user = findOne.call(this, {
-        "_id": login
-    });
-
-    if (user === null) {
-        createMessage.call(this, "error", "Ошибка соединения! Попробуйте еще раз...");
-
-        return null;
-    }
-
-    if (user) {
-        createMessage.call(this, "alert", "Это имя пользователя уже занято!");
-    } else {
-        if (insertOne.call(this, {
-            "_id": login,
-            "password": password
-        })) {
-            this.loading.style.display = "flex";
-
-            localStorage.setItem("mlplist_user", login);
-            localStorage.setItem("mlplist_password", password);
-
-            document.getElementById("menu_login").style.display = "none";
-
-            createMessage.call(this, "info", "Регистрация успешна!");
-            createMessage.call(this, "info", "Добро пожаловать, " + login);
-
-            loadUserData.call(this);
-            createTable.call(this);
-        } else {
-            createMessage.call(this, "error", "Во время регистрации произошла ошибка!");
+        } catch (e) {
+            console.error(e);
         }
     }
 }
