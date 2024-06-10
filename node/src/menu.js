@@ -581,12 +581,15 @@ export function createUserMenu() {
                                                         "altpony",
                                                         "ownpet",
                                                         "item",
-                                                        "collection"
+                                                        "collection",
+                                                        "totem"
                                                     ].includes(name);
                                                 }
                                             });
 
                                             let saveData = parser.parse(reader.result.toString());
+
+                                            console.log(saveData);
 
                                             let parseData = {};
 
@@ -985,10 +988,82 @@ export function createUserMenu() {
                                                             console.error(e);
                                                         }
                                                     }
+
+                                                    if (page === "totem") {
+                                                        try {
+                                                            saveData["mlp_save"]["playerdata"]["zecorasshop"]["toteminfo"]["totem"].forEach((element) => {
+                                                                try {
+                                                                    if (!(page in parseData)) {
+                                                                        parseData[page] = [];
+                                                                    }
+
+                                                                    let elID = dataList.find((el) => {
+                                                                        return ((("@_" + el.toLowerCase()) in element) && (element["@_" + el.toLowerCase()] === "1"));
+                                                                    });
+
+                                                                    if (elID && !parseData[page].includes(elID)) {
+                                                                        parseData[page].push(elID);
+                                                                    }
+                                                                } catch (e) {
+                                                                    console.error(e);
+                                                                }
+                                                            });
+                                                        } catch (e) {
+                                                            console.error(e);
+                                                        }
+                                                    }
+
+                                                    if (page === "decore") {
+                                                        try {
+                                                            saveData["mlp_save"]["playerdata"]["storage"]["storeditem"].forEach((element) => {
+                                                                try {
+                                                                    if (element["@_id"].startsWith("Decoration_")) {
+                                                                        if (!(page in parseData)) {
+                                                                            parseData[page] = [];
+                                                                        }
+
+                                                                        if (!parseData[page].includes(element["@_id"]) && dataList.includes(element["@_id"])) {
+                                                                            parseData[page].push(element["@_id"]);
+                                                                        }
+                                                                    }
+                                                                } catch (e) {
+                                                                    console.error(e);
+                                                                }
+                                                            });
+                                                        } catch (e) {
+                                                            console.error(e);
+                                                        }
+
+                                                        try {
+                                                            saveData["mlp_save"]["mapzone"].forEach((zone) => {
+                                                                try {
+                                                                    zone["gameobjects"]["decore_objects"]["object"].forEach((element) => {
+                                                                        try {
+                                                                            if (!(page in parseData)) {
+                                                                                parseData[page] = [];
+                                                                            }
+
+                                                                            if (!parseData[page].includes(element["@_id"]) && dataList.includes(element["@_id"])) {
+                                                                                parseData[page].push(element["@_id"]);
+                                                                            }
+                                                                        } catch (e) {
+                                                                            console.error(e);
+                                                                        }
+                                                                    });
+                                                                } catch (e) {
+                                                                    console.error(e);
+                                                                }
+                                                            });
+                                                        } catch (e) {
+                                                            console.error(e);
+                                                        }
+                                                    }
                                                 } catch (e) {
                                                     console.error(e);
                                                 }
                                             }
+
+                                            console.log(parseData);
 
                                             let insertData = {};
 
@@ -1015,6 +1090,8 @@ export function createUserMenu() {
                                                                         } else {
                                                                             delete insertData[page];
                                                                         }
+
+                                                                        console.log(insertData);
                                                                     });
                                                                 }));
 
@@ -1744,4 +1821,96 @@ export function createStyleMenu() {
             el2.innerText = "Список";
         }));
     }));
+}
+
+export function createNewsMenu() {
+    let xhr = new XMLHttpRequest();
+
+    xhr.open("GET", "../_resources/data/news.json", false);
+
+    xhr.addEventListener("load", () => {
+        if (xhr.status === 200) {
+            let newsData = JSON.parse(xhr.responseText);
+
+            if (newsData[0]["date"] !== localStorage.getItem("mlplist_news")) {
+                document.body.appendChild(createElement("div", {
+                    class: "menu"
+                }, (el) => {
+                    el.style.display = "flex";
+
+                    el.appendChild(createElement("div", {
+                        class: "menu_block"
+                    }, (el2) => {
+                        el2.appendChild(createElement("div", {
+                            class: "menu_block_header"
+                        }, (el3) => {
+                            el3.style.backgroundColor = "green";
+
+                            el3.appendChild(createElement("span", {}, (el4) => {
+                                el4.innerText = "Что нового:";
+                            }));
+
+                            el3.appendChild(createElement("input", {
+                                class: "menu_block_header_close",
+                                type: "button",
+                                value: "X"
+                            }, (el4) => {
+                                el4.addEventListener("click", () => {
+                                    el.style.display = "none";
+
+                                    localStorage.setItem("mlplist_news", newsData[0]["date"]);
+                                });
+                            }));
+                        }));
+
+                        el2.appendChild(createElement("div", {
+                            class: "menu_block_content"
+                        }, (el3) => {
+                            newsData.forEach((element) => {
+                                try {
+                                    el3.appendChild(createElement("div", {
+                                        class: "news"
+                                    }, (el4) => {
+                                        el4.appendChild(createElement("span", {
+                                            class: "news_title"
+                                        }, (el5) => {
+                                            el5.innerText = element["date"];
+                                        }));
+
+                                        el4.appendChild(createElement("div", {
+                                            class: "news_data"
+                                        }, (el5) => {
+                                            element["news"].forEach((item) => {
+                                                try {
+                                                    el5.appendChild(createElement("span", {}, (el6) => {
+                                                        el6.innerText = ("- " + item);
+                                                    }));
+                                                } catch (e) {
+                                                    console.error(e);
+                                                }
+                                            });
+                                        }));
+                                    }));
+                                } catch (e) {
+                                    console.error(e);
+                                }
+                            });
+                        }));
+                    }));
+                }));
+            }
+        } else {
+            setTimeout(() => {
+                createNewsMenu.call(this);
+            }, 1000);
+        }
+    });
+
+    xhr.addEventListener("error", () => {
+        setTimeout(() => {
+            createNewsMenu.call(this);
+        }, 1000);
+    });
+
+    xhr.send();
 }

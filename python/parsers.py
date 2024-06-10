@@ -461,3 +461,77 @@ def playercardcutiemark(item, category):
                     "sity": res_sity}
     except Exception:
         return None
+
+
+@Parser(category="Totem",
+        description="Тотемы")
+def totem(item, category):
+    try:
+        res_image, res_name, res_sity = "", "", []
+
+        # gameobjectdata:
+        try:
+            image = load_image(image=item.find_all(name="Production",
+                                                   limit=1)[0]["ShopIcon"],
+                               category=category)
+
+            if image:
+                res_image = image
+        except Exception:
+            pass
+
+        try:
+            res_name = item.find_all(name="Name",
+                                     limit=1)[0]["Unlocal"]
+        except Exception:
+            pass
+
+        # shopdata:
+        try:
+            res_sity = DATA["shopdata"][item["ID"]]
+        except Exception:
+            pass
+
+        if res_image and res_name and (item["ID"] in DATA["shopdata"]) and (res_name in DATA["english"]):
+            return {"image": res_image,
+                    "name": res_name,
+                    "sity": res_sity}
+    except Exception:
+        return None
+
+
+@Parser(category="Decore",
+        description="Декорации")
+def decore(item, category):
+    try:
+        res_image, res_name, res_sity = "", "", []
+
+        # gameobjectdata:
+        try:
+            image = load_image(image=item.find_all(name="Shop",
+                                                   limit=1)[0]["Icon"],
+                               category=category)
+
+            if image:
+                res_image = image
+        except Exception:
+            pass
+
+        try:
+            res_name = item.find_all(name="Name",
+                                     limit=1)[0]["Unlocal"]
+        except Exception:
+            pass
+
+        # shopdata:
+        try:
+            res_sity = DATA["shopdata"][item["ID"]]
+        except Exception:
+            pass
+
+        if res_image and res_name and (item["ID"] in DATA["shopdata"]) and (res_name in DATA["english"]):
+            return {"image": res_image,
+                    "name": res_name,
+                    "sity": res_sity}
+    except Exception:
+        return None

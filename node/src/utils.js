@@ -61,6 +61,11 @@ export function zoomOut() {
 export class updateTitle {
     constructor() {
         this.title = document.getElementById("title");
+        this.ogTitle = document.getElementById("og_title");
+
+        this.description = document.getElementById("description");
+        this.ogDescription = document.getElementById("og_description");
+
         this.headerTitle = document.getElementById("header_title");
 
         this.category = null;
@@ -92,6 +97,7 @@ export class updateTitle {
         }
 
         this.title.innerText = text;
+        this.ogTitle.content = text;
 
         if ("all" in data) {
             this.all = parseInt(data["all"]);
@@ -107,8 +113,13 @@ export class updateTitle {
             }
         }
 
-        if (this.add && this.all) {
-            text += (" (Имеется: " + this.add + ", Не имеется: " + (this.all - this.add) + ")");
+        if ((this.add !== null) && (this.all !== null)) {
+            let data = ("Имеется: " + this.add + ", Не имеется: " + (this.all - this.add));
+
+            text += (" (" + data + ")");
+
+            this.description.content = data;
+            this.ogDescription.content = data;
         }
 
         this.headerTitle.innerText = text;
@@ -123,4 +134,56 @@ export function titleCase(sentence) {
     });
 
     return sentence;
+}
+
+export function scrollMenu() {
+    let scrollRoot = null;
+    let scrollIcon = null;
+
+    let scrollOld = 0;
+
+    document.querySelector("body").appendChild(createElement("div", {
+        class: "scroll",
+    }, (el) => {
+        scrollRoot = el;
+
+        el.appendChild(createElement("img", {
+            class: "scroll_icon",
+            src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIGZpbGw9JyNmZmYnIHZpZXdCb3g9JzAgMCA4IDgnPjxwYXRoIGQ9J001LjI1IDBsLTQgNCA0IDQgMS41LTEuNS0yLjUtMi41IDIuNS0yLjUtMS41LTEuNXonLz48L3N2Zz4="
+        }, (el2) => {
+            scrollIcon = el2;
+        }));
+
+        el.addEventListener("click", () => {
+            if (scrollY > 0) {
+                scrollOld = scrollY;
+
+                scrollTo(scrollX, 0);
+            } else {
+                scrollTo(scrollX, scrollOld);
+
+                scrollOld = 0;
+            }
+        });
+    }));
+
+    if (scrollY > 0) {
+        scrollRoot.style.display = "flex";
+
+        scrollIcon.style.transform = "rotate(90deg)";
+    }
+
+    window.addEventListener("scroll", () => {
+        if (scrollY > 0) {
+            scrollRoot.style.display = "flex";
+
+            scrollIcon.style.transform = "rotate(90deg)";
+        } else if ((scrollY === 0) && (scrollOld > 0)) {
+            scrollRoot.style.display = "flex";
+
+            scrollIcon.style.transform = "rotate(270deg)";
+        } else {
+            scrollRoot.style.display = "none";
+        }
+    });
 }

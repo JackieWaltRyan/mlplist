@@ -1,9 +1,10 @@
 import {findOne, updateOne} from "./mongo";
-import {createElement, createMessage, updateTitle, zoomIn, zoomOut} from "./utils";
+import {createElement, createMessage, scrollMenu, updateTitle, zoomIn, zoomOut} from "./utils";
 import {
     createCategoriesMenu,
     createFilterMenu,
     createLanguagesMenu,
+    createNewsMenu,
     createSortMenu,
     createStyleMenu,
     createUserMenu
@@ -28,6 +29,8 @@ export function init() {
             name: null
         }
     };
+
+    scrollMenu.call(this);
 
     if (!this.getURL.searchParams.has("page")) {
         this.getURL.searchParams.set("page", encodeURIComponent("profileavatar"));
@@ -79,6 +82,57 @@ export function init() {
     loadUserData.call(this);
 
     createTable.call(this);
+
+    let oldScroll = 0;
+    let oldHeader = 0;
+
+    window.addEventListener("scroll", () => {
+        let header = document.getElementById("header");
+        let headerTitle = document.getElementById("header_title");
+
+        if ((scrollY - oldScroll) > 0) {
+            if (oldHeader > (headerTitle.offsetTop * -1)) {
+                oldHeader -= (scrollY - oldScroll);
+
+                if (oldHeader < (headerTitle.offsetTop * -1)) {
+                    oldHeader = (headerTitle.offsetTop * -1);
+                }
+
+                header.style.top = (oldHeader + "px");
+            }
+        } else {
+            if (oldHeader < 0) {
+                oldHeader -= (scrollY - oldScroll);
+
+                if (oldHeader > 0) {
+                    oldHeader = 0;
+                }
+
+                header.style.top = (oldHeader + "px");
+            }
+        }
+
+        oldScroll = scrollY;
+    });
+
+    document.getElementById("header_share").addEventListener("click", () => {
+        navigator.clipboard.writeText(location.href).then(r => r);
+
+        createMessage.call(this, "info", "Ссылка на страницу скопирована!");
+
+        let shareData = {
+            title: document.getElementById("header_title").innerText,
+            text: document.getElementById("header_title").innerText,
+
+            url: location.href
+        };
+
+        if (navigator.canShare(shareData)) {
+            navigator.share(shareData).then(r => r);
+        }
+    });
+
+    createNewsMenu.call(this);
 }
 
 export function loadLanguageFile() {
