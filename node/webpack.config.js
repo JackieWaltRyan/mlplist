@@ -1,3 +1,5 @@
+let {join} = require("node:path");
+
 module.exports = {
     mode: "production",
 
@@ -8,7 +10,8 @@ module.exports = {
     },
 
     output: {
-        filename: "list/_resources/scripts/index.js",
+        path: join(process.cwd(), "www/list/_resources/scripts"),
+        filename: "javascript.js",
         library: "MLPlist"
     }
 };
