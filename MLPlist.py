@@ -147,7 +147,7 @@ def parse_version():
                 with open(file=f"{folder}/version.json",
                           mode="w",
                           encoding="UTF-8") as version_json:
-                    dump(obj={"version": soup},
+                    dump(obj={"version": soup[:-2]},
                          fp=version_json,
                          ensure_ascii=False)
 
@@ -176,47 +176,26 @@ def parse_collectiondata(data):
                 soup = BeautifulSoup(markup=collection_xml.read(),
                                      features="xml")
 
-                print(f"    Поиск всех Collection...")
+                cat = soup.new_tag(name="Category",
+                                   attrs={"ID": "Collection"})
 
-                items, i, ii, res = soup.find_all(name="CollectionData",
-                                                  limit=1)[0], 1, 1, {}
+                cat.extend(soup.find_all(name="CollectionData",
+                                         limit=1)[0])
 
-                for item in items:
-                    print(f"\r        Обработано {ii} из {len(items)}.",
-                          end="")
+                data.append(cat)
 
-                    if len(item) > 1:
-                        res.update({i: {"id": item["collectionId"],
-                                        "image": load_image(image="playerdetails_collections",
-                                                            category="collection"),
-                                        "name": item["locString"],
-                                        "sity": None}})
-
-                        i += 1
-
-                    ii += 1
-
-                data.update({"Коллекции": {"image": res[1]["image"],
-                                           "page": "collection",
-                                           "data": res}})
-
-                print("")
-                print("")
-
-                return True
+                return data
         else:
             print("[ERROR] Отсутствует папка 000_and_mlpextra_common или в ней нет файла collectionData.xml. "
                   "Разархивируйте архив 000_and_mlpextra_common.ark используя программу ARKdumper. "
                   "В настройках программы ARKdumper обязательно установите Convert = 1.\n")
 
-            return False
+            return data
     except Exception:
-        print("")
-
         print("[ERROR] Во время обработки файла 000_and_mlpextra_common/collectionData.xml возникла ошибка. "
               "Возможно данные в файле повреждены или нет прав на чтение файлов.\n")
 
-        return False
+        return data
 
 
 def find_image_files():
@@ -326,8 +305,6 @@ def create_files_html(data):
     try:
         trigger, folder = True, "MLPlist/list/_resources/data"
 
-        trigger = parse_collectiondata(data=data)
-
         categoryes = dict(sorted(data.items(),
                                  key=lambda x: x[0].lower()))
 
@@ -421,6 +398,8 @@ def parse_gameobjectdata():
                                      features="xml").find_all(name="GameObjects",
                                                               limit=1)[0]
 
+                soup = parse_collectiondata(data=soup)
+
                 for cat in FUNCTIONS:
                     print(f"    Поиск всех {cat}...")
 
@@ -453,8 +432,7 @@ def parse_gameobjectdata():
 
                             ii += 1
 
-                        all_data.update({DATA["descriptions"][cat]: {"image": data[1]["image"],
-                                                                     "page": cat.lower(),
+                        all_data.update({DATA["descriptions"][cat]: {"page": cat.lower(),
                                                                      "data": data}})
 
                         print("")

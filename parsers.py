@@ -535,3 +535,38 @@ def decore(item, category):
                     "sity": res_sity}
     except Exception:
         return None
+
+
+@Parser(category="Collection",
+        description="Коллекции")
+def collection(item, category):
+    try:
+        res_id, res_image, res_name, res_sity = "", "", "", []
+
+        # gameobjectdata:
+        try:
+            res_id = item["collectionId"]
+        except Exception:
+            pass
+
+        try:
+            image = load_image(image="playerdetails_collections",
+                               category=category)
+
+            if image:
+                res_image = image
+        except Exception:
+            pass
+
+        try:
+            res_name = item["locString"]
+        except Exception:
+            pass
+
+        if res_id and res_image and res_name and (res_name in DATA["english"]):
+            return {"id": res_id,
+                    "image": res_image,
+                    "name": res_name,
+                    "sity": res_sity}
+    except Exception:
+        return None
